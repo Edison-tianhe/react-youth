@@ -1,4 +1,5 @@
 import { getType } from './utils';
+import React from '../react';
 
 const setAttribute = (dom, key, value) => {
     if (key === 'className') {
@@ -51,6 +52,26 @@ const render = (vNode, container) => {
     return container.appendChild(_render(vNode));
 }
 
+export const renderComponent = (com) => {
+    const initRender = com.render();
+    com.$node = _render(initRender);
+    return com;
+}
+
+const createComponent = (com, props) => {
+    let init = null;
+    if (com.prototype?.render) { // * 类组件
+        init = renderComponent(new com(props));
+    } else { // *函数组件
+        init = new React.Component(props);
+        init.constructor = com;
+        init.render = () => init.constructor(props);
+        console.log(init)
+        init.$node = _render(init.render())
+    }
+    return init;
+}
+
 const _render = (vNode) => {
     // *过滤空节点
     if (!vNode) {
@@ -59,6 +80,10 @@ const _render = (vNode) => {
     // *过滤字符串或者数字
     if (getType(vNode) === 'Number' || getType(vNode) === 'String') {
         return document.createTextNode(vNode);
+    }
+    // *过滤函数组件
+    if (getType(vNode.tag) === 'Function') {
+        return createComponent(vNode.tag, vNode.attrs).$node
     }
 
     const { tag, attrs, children } = vNode;
