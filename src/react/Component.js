@@ -6,9 +6,14 @@ export default class Component {
     this.props = props;
   }
 
+  shouldComponentUpdate() {
+    return true;
+  }
+
   setState(stateChange) {
     Object.assign(this.state, stateChange);
-
-    renderComponent(this);
+    if (this.shouldComponentUpdate()) {
+      renderComponent(this);
+    }
   }
 }

@@ -53,8 +53,22 @@ const render = (vNode, container) => {
 }
 
 export const renderComponent = (com) => {
+    // *储存当前render出来的dom节点
+    let $node = null;
+    
     const initRender = com.render();
-    com.$node = _render(initRender);
+    $node = _render(initRender);
+    if (!com.$node && com.componentDidMount) {
+        com.componentDidMount();
+    }
+    // *state更新 替换节点
+    if (com.$node && com.$node.parentNode) {
+        com.$node.parentNode.replaceChild($node, com.$node);
+        if (com.componentDidUpdate) {
+            com.componentDidUpdate();
+        }
+    }
+    com.$node = $node;
     return com;
 }
 
@@ -66,20 +80,19 @@ const createComponent = (com, props) => {
         init = new React.Component(props);
         init.constructor = com;
         init.render = () => init.constructor(props);
-        console.log(init)
         init.$node = _render(init.render())
     }
     return init;
 }
 
 const _render = (vNode) => {
-    // *过滤空节点
-    if (!vNode) {
-        return false;
-    }
     // *过滤字符串或者数字
     if (getType(vNode) === 'Number' || getType(vNode) === 'String') {
         return document.createTextNode(vNode);
+    }
+    // *过滤空节点
+    if (!vNode) {
+        return false;
     }
     // *过滤函数组件
     if (getType(vNode.tag) === 'Function') {
